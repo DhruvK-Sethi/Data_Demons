@@ -81,8 +81,13 @@ void update(char *argv[])
 
     time++;
     cout << "Time3: " << time << endl;
-    string sql_query4 = "UPDATE Traffic_lights SET R = " + to_string(rl) + ", G = " + to_string(gl) + ", Y = " + to_string(yl) + ", TIME = " + to_string(time) + "WHERE ID = " + to_string(*argv[0]) + " ;";
+    string sql_query4 = "UPDATE Traffic_lights SET R = " + to_string(rl) + ", G = " + to_string(gl) + ", Y = " + to_string(yl) + ", TIME = " + to_string(time) + " WHERE ID = " + to_string(*argv[0]) + ";";
     rc = sqlite3_exec(db, sql_query4.c_str(), 0, 0, &zErrMsg);
+    if (rc != SQLITE_OK)
+    {
+        cout << "Error updating traffic lights: " << zErrMsg << endl;
+        sqlite3_free(zErrMsg);
+    }
     sqlite3_close(db);
 }
 
@@ -147,12 +152,12 @@ int main()
     else
         std::cout << "Table created Successfully" << std::endl;
 
-    insert(db, 1, 30.90660430000, 75.85988220000, 1, 0, 0, 25);
-    insert(db, 2, 30.90660430000, 75.85988220000, 1, 0, 0, 25);
-    insert(db, 3, 30.90660430000, 75.85988220000, 1, 0, 0, 25);
-    insert(db, 4, 30.90660430000, 75.85988220000, 1, 0, 0, 25);
-    insert(db, 5, 30.90660430000, 75.85988220000, 1, 0, 0, 25);
-    insert(db, 6, 30.90660430000, 75.85988220000, 1, 0, 0, 25);
+    insert(db, 1, 30.90660430000, 75.85988220000, 1, 0, 0, 2);
+    insert(db, 2, 30.90660430000, 75.85988220000, 1, 0, 0, 2);
+    insert(db, 3, 30.90660430000, 75.85988220000, 1, 0, 0, 2);
+    insert(db, 4, 30.90660430000, 75.85988220000, 1, 0, 0, 2);
+    insert(db, 5, 30.90660430000, 75.85988220000, 1, 0, 0, 2);
+    insert(db, 6, 30.90660430000, 75.85988220000, 1, 0, 0, 2);
     while (true)
     {
         Sleep(1000);
