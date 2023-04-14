@@ -19,7 +19,7 @@ sqlite3 *open_db()
     {
         std::cerr << "Can't open database: " << endl
                   << sqlite3_errmsg(db);
-        return;
+        return 0;
     }
     else
     {
