@@ -34,10 +34,15 @@ void update(char *argv[])
     int time, rl, gl, yl, rc;
     char *zErrMsg = 0;
     time = rl = gl = yl = 0;
+    cout << "Red: " << argv[1] << endl;
+    cout << "Green: " << argv[2] << endl;
+    cout << "Yellow: " << argv[3] << endl;
+    cout << "Time1: " << argv[4] << endl;
     rl = *argv[1];
     gl = *argv[2];
     yl = *argv[3];
-    time = *argv[4];
+    time = stoi(argv[4]);
+    cout << "Time2: " << time << endl;
 
     if (rl)
     {
@@ -75,8 +80,10 @@ void update(char *argv[])
     }
 
     time++;
+    cout << "Time3: " << time << endl;
     string sql_query4 = "UPDATE Traffic_lights SET R = " + to_string(rl) + ", G = " + to_string(gl) + ", Y = " + to_string(yl) + ", TIME = " + to_string(time) + "WHERE ID = " + to_string(*argv[0]) + " ;";
     rc = sqlite3_exec(db, sql_query4.c_str(), 0, 0, &zErrMsg);
+    sqlite3_close(db);
 }
 
 void insert(sqlite3 *db, int id, float lat, float longi, int r, int g, int y, int time)
@@ -100,11 +107,11 @@ static int callback(void *data, int argc, char **argv, char **azColName)
     int i;
     fprintf(stderr, "%s", (const char *)data);
 
-    for (i = 0; i < argc; i++)
-    {
-        update(argv);
-        // printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
-    }
+    update(argv);
+    // for (i = 0; i < argc; i++)
+    // {
+    //     printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
+    // }
 
     printf("\n");
     return 0;
