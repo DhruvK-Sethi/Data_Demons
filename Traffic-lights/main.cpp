@@ -4,201 +4,172 @@
 #include <windows.h>
 using namespace std;
 
-bool is_database_open(sqlite3 *db)
+class temp
 {
-    const char *main = sqlite3_db_filename(db, "main");
-    return (main != nullptr);
-}
-
-sqlite3 *open_db()
-{
-    sqlite3 *db;
-    int rc = sqlite3_open("main.db", &db);
-
-    if (rc)
-    {
-        std::cerr << "Can't open database: " << endl
-                  << sqlite3_errmsg(db);
-        return 0;
-    }
-    else
-    {
-        cout << "Opened database successfully" << endl;
-    }
-    return db;
-}
-
-void update(char *argv[])
-{
-    sqlite3 *db = open_db();
-    int time, rl, gl, yl, rc;
-    char *zErrMsg = 0;
-    time = rl = gl = yl = 0;
-    cout << "Red: " << argv[1] << endl;
-    cout << "Green: " << argv[2] << endl;
-    cout << "Yellow: " << argv[3] << endl;
-    cout << "Time1: " << argv[4] << endl;
-    rl = *argv[1];
-    gl = *argv[2];
-    yl = *argv[3];
-    time = stoi(argv[4]);
-    cout << "Time2: " << time << endl;
-
-    if (rl)
-    {
-
-        if (time >= 45)
-        {
-
-            rl = 0;
-            yl = 1;
-            time = 0;
-        }
-    }
-
-    if (yl)
-    {
-
-        if (time >= 5)
-        {
-
-            yl = 0;
-            gl = 1;
-            time = 0;
-        }
-    }
-    if (gl)
-    {
-
-        if (time >= 30)
-        {
-
-            gl = 0;
-            rl = 1;
-            time = 0;
-        }
-    }
-
-    time++;
-    cout << "Time3: " << time << endl;
-    string sql_query4 = "UPDATE Traffic_lights SET R = " + to_string(rl) + ", G = " + to_string(gl) + ", Y = " + to_string(yl) + ", TIME = " + to_string(time) + " WHERE ID = " + to_string(*argv[0]) + ";";
-    rc = sqlite3_exec(db, sql_query4.c_str(), 0, 0, &zErrMsg);
-    if (rc != SQLITE_OK)
-    {
-        cout << "Error updating traffic lights: " << zErrMsg << endl;
-        sqlite3_free(zErrMsg);
-    }
-    sqlite3_close(db);
-}
-
-void insert(sqlite3 *db, int id, float lat, float longi, int r, int g, int y, int time)
-{
+    int id;
     char *messaggeError;
-    int rc = 0;
-    string sql_query2 = "INSERT INTO Traffic_lights VALUES(" + to_string(id) + ", " + to_string(lat) + ", " + to_string(longi) + ", " + to_string(r) + "," + to_string(g) + "," + to_string(y) + "," + to_string(time) + ");";
-    rc = sqlite3_exec(db, sql_query2.c_str(), NULL, 0, &messaggeError);
-    if (rc != SQLITE_OK)
+    string data;
+    sqlite3 *db;
+
+public:
+    temp()
     {
-        cerr << "Error Insert" << std::endl;
-        sqlite3_free(messaggeError);
+        int rc = sqlite3_open("main.db", &db);
+        if (rc)
+        {
+            std::cerr << "Can't open database: " << endl
+                      << sqlite3_errmsg(db);
+        }
+        else
+        {
+            cout << "Opened database successfully" << endl;
+        }
     }
-    else
-        cout << "Records created Successfully!" << std::endl;
-}
+    void update(int ID, int R, int G, int Y, int TIME)
+    {
 
-static int callback(void *data, int argc, char **argv, char **azColName)
-{
+        int time, rl, gl, yl, rc, id;
+        char *zErrMsg = 0;
+        time = rl = gl = yl = 0;
+        id = ID;
+        rl = R;
+        gl = G;
+        yl = Y;
+        time = TIME;
+        // cout << "Time1: " << time << endl;
 
-    int i;
-    fprintf(stderr, "%s", (const char *)data);
+        if (rl)
+        {
 
-    update(argv);
-    // for (i = 0; i < argc; i++)
+            if (time >= 45)
+            {
+
+                rl = 0;
+                yl = 1;
+                time = 0;
+                cout << "Switched Red for id: " << id << endl;
+            }
+        }
+
+        if (yl)
+        {
+
+            if (time >= 5)
+            {
+
+                yl = 0;
+                gl = 1;
+                time = 0;
+                cout << "Switched Yellow for id: " << id << endl;
+            }
+        }
+        if (gl)
+        {
+
+            if (time >= 30)
+            {
+
+                gl = 0;
+                rl = 1;
+                time = 0;
+                cout << "Switched Green for id: " << id << endl;
+            }
+        }
+
+        time++;
+        cout << "Time of " + to_string(id) + " : " << time << endl;
+        string sql_query4 = "UPDATE Traffic_lights SET R = " + to_string(rl) + ", G = " + to_string(gl) + ", Y = " + to_string(yl) + ", TIME = " + to_string(time) + " WHERE ID = " + to_string(id) + ";";
+        rc = sqlite3_exec(db, sql_query4.c_str(), 0, 0, &zErrMsg);
+        if (rc != SQLITE_OK)
+        {
+            cout << "Error updating traffic lights: " << zErrMsg << endl;
+            sqlite3_free(zErrMsg);
+        }
+        sqlite3_close(db);
+    }
+    // int callback(void *data, int argc, char **argv, char **azColName)
     // {
-    //     printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
+
+    //     int i;
+    //     fprintf(stderr, "%s", (const char *)data);
+
+    //     update(argv);
+    //     // for (i = 0; i < argc; i++)
+    //     // {
+    //     //     printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
+    //     // }
+
+    //     printf("\n");
+    //     return 0;
     // }
 
-    printf("\n");
-    return 0;
-}
+    void main2()
+    {
+        // while (true)
+        // {
+        //     Sleep(1000);
+        //     for (id = 0; id < 7; id++)
+        //     {
+        //         string sql_query3 = "SELECT ID, R,G,Y,TIME FROM Traffic_lights WHERE ID = " + to_string(id);
+        //         rc = sqlite3_exec(db, sql_query3.c_str(), callback, (void *)data.c_str(), NULL);
+        //         if (rc != SQLITE_OK)
+        //         {
+        //             std::cerr << "Error Print" << std::endl;
+        //             sqlite3_free(messaggeError);
+        //         }
+        //         else
+        //             std::cout << "Record Printed Successfully!" << std::endl;
+        //     }
+        // }
+
+        // sqlite3_close(db);
+        sqlite3_stmt *stmt;
+        while (true)
+        {
+            system("cls");
+
+            for (int i = 0; i < 7; i++)
+            {
+
+                string sql_query1 = "SELECT ID, R, G, Y, TIME FROM Traffic_lights WHERE id = " + to_string(i) + ";";
+                int rc = sqlite3_prepare_v2(db, sql_query1.c_str(), -1, &stmt, nullptr);
+                if (rc != SQLITE_OK)
+                {
+                    std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
+                    sqlite3_close(db);
+                    return;
+                }
+
+                // Execute the SELECT statement and retrieve the results
+                while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
+                {
+                    // string name(reinterpret_cast<const char *>(sqlite3_column_text(stmt, 0)));
+                    int ID = sqlite3_column_int(stmt, 0);
+                    int R = sqlite3_column_int(stmt, 1);
+                    int G = sqlite3_column_int(stmt, 2);
+                    int Y = sqlite3_column_int(stmt, 3);
+                    int TIME = sqlite3_column_int(stmt, 4);
+                    // cout << name << " " << age << endl;
+                    update(ID, R, G, Y, TIME);
+                }
+
+                if (rc != SQLITE_DONE)
+                {
+                    cerr << "Failed to execute statement: " << sqlite3_errmsg(db) << endl;
+                }
+            }
+            Sleep(1000);
+        }
+
+        // Clean up
+        sqlite3_finalize(stmt);
+        sqlite3_close(db);
+    }
+};
 
 int main()
 {
-    system("cls");
-    int id, r, g, y, time;
-    float lat, longi;
-    string data("CALLBACK FUNCTION: \n");
-    sqlite3 *db;
-    db = open_db();
-    int rc = is_database_open(db);
-
-    string sql_query1 = "CREATE TABLE Traffic_lights("
-                        "ID INTEGER PRIMARY KEY AUTOINCREMENT, "
-                        "LAT FLOAT NOT NULL, "
-                        "LONG FLOAT NOT NULL, "
-                        "R INT NOT NULL, "
-                        "G INT NOT NULL, "
-                        "Y INT NOT NULL, "
-                        "TIME INT NOT NULL);";
-
-    char *messaggeError;
-    rc = sqlite3_exec(db, sql_query1.c_str(), NULL, 0, &messaggeError);
-
-    if (rc != SQLITE_OK)
-    {
-        std::cerr << "Error Create Table" << std::endl;
-        sqlite3_free(messaggeError);
-    }
-    else
-        std::cout << "Table created Successfully" << std::endl;
-
-    insert(db, 1, 30.90660430000, 75.85988220000, 1, 0, 0, 2);
-    insert(db, 2, 30.90660430000, 75.85988220000, 1, 0, 0, 2);
-    insert(db, 3, 30.90660430000, 75.85988220000, 1, 0, 0, 2);
-    insert(db, 4, 30.90660430000, 75.85988220000, 1, 0, 0, 2);
-    insert(db, 5, 30.90660430000, 75.85988220000, 1, 0, 0, 2);
-    insert(db, 6, 30.90660430000, 75.85988220000, 1, 0, 0, 2);
-    while (true)
-    {
-        Sleep(1000);
-        for (id = 0; id < 7; id++)
-        {
-            string sql_query3 = "SELECT ID, R,G,Y,TIME FROM Traffic_lights WHERE ID = " + to_string(id);
-            rc = sqlite3_exec(db, sql_query3.c_str(), callback, (void *)data.c_str(), NULL);
-            if (rc != SQLITE_OK)
-            {
-                std::cerr << "Error Print" << std::endl;
-                sqlite3_free(messaggeError);
-            }
-            else
-                std::cout << "Record Printed Successfully!" << std::endl;
-        }
-    }
-
-    sqlite3_close(db);
-
+    temp t;
+    t.main2();
     return 0;
 }
-
-// string sql_query2("INSERT INTO Traffic_lights VALUES(1, 30.90660430000, 75.85988220000, 1,0,0, 20);"
-//                   "INSERT INTO Traffic_lights VALUES(2, 30.90649690000, 75.85988470000, 0,1,0, 35);"
-//                   "INSERT INTO Traffic_lights VALUES(3, 30.90637920000, 75.85953980000, 1,0,0, 15);");
-
-// rc = sqlite3_exec(db, sql_query2.c_str(), NULL, 0, &messaggeError);
-// if (rc != SQLITE_OK)
-// {
-//     std::cerr << "Error Insert" << std::endl;
-//     sqlite3_free(messaggeError);
-// }
-
-// else
-//     std::cout << "Records created Successfully!" << std::endl;
-
-// sqlite3_stmt *stmt;
-// const char *sql = "SELECT * FROM my_table";
-// rc = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
-// while (sqlite3_step(stmt) == SQLITE_ROW)
-// {
-//     // Process each row of the result set
-// }
-// sqlite3_finalize(stmt);
