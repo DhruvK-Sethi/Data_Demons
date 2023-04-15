@@ -4,7 +4,7 @@
 #include <windows.h>
 using namespace std;
 
-class temp
+class simulation
 {
     int id;
     char *messaggeError;
@@ -12,7 +12,7 @@ class temp
     sqlite3 *db;
 
 public:
-    temp()
+    simulation()
     {
         int rc = sqlite3_open("main.db", &db);
         if (rc)
@@ -36,7 +36,6 @@ public:
         gl = G;
         yl = Y;
         time = TIME;
-        // cout << "Time1: " << time << endl;
 
         if (rl)
         {
@@ -87,23 +86,8 @@ public:
         }
         sqlite3_close(db);
     }
-    // int callback(void *data, int argc, char **argv, char **azColName)
-    // {
 
-    //     int i;
-    //     fprintf(stderr, "%s", (const char *)data);
-
-    //     update(argv);
-    //     // for (i = 0; i < argc; i++)
-    //     // {
-    //     //     printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
-    //     // }
-
-    //     printf("\n");
-    //     return 0;
-    // }
-
-    void main2()
+    void driver()
     {
 
         sqlite3_stmt *stmt;
@@ -123,16 +107,15 @@ public:
                     return;
                 }
 
-                // Execute the SELECT statement and retrieve the results
                 while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
                 {
-                    // string name(reinterpret_cast<const char *>(sqlite3_column_text(stmt, 0)));
+
                     int ID = sqlite3_column_int(stmt, 0);
                     int R = sqlite3_column_int(stmt, 1);
                     int G = sqlite3_column_int(stmt, 2);
                     int Y = sqlite3_column_int(stmt, 3);
                     int TIME = sqlite3_column_int(stmt, 4);
-                    // cout << name << " " << age << endl;
+
                     update(ID, R, G, Y, TIME);
                 }
 
@@ -144,7 +127,6 @@ public:
             Sleep(1000);
         }
 
-        // Clean up
         sqlite3_finalize(stmt);
         sqlite3_close(db);
     }
@@ -152,7 +134,7 @@ public:
 
 int main()
 {
-    temp t;
-    t.main2();
+    simulation s;
+    s.driver();
     return 0;
 }
