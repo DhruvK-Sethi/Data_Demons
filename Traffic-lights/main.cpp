@@ -105,24 +105,7 @@ public:
 
     void main2()
     {
-        // while (true)
-        // {
-        //     Sleep(1000);
-        //     for (id = 0; id < 7; id++)
-        //     {
-        //         string sql_query3 = "SELECT ID, R,G,Y,TIME FROM Traffic_lights WHERE ID = " + to_string(id);
-        //         rc = sqlite3_exec(db, sql_query3.c_str(), callback, (void *)data.c_str(), NULL);
-        //         if (rc != SQLITE_OK)
-        //         {
-        //             std::cerr << "Error Print" << std::endl;
-        //             sqlite3_free(messaggeError);
-        //         }
-        //         else
-        //             std::cout << "Record Printed Successfully!" << std::endl;
-        //     }
-        // }
 
-        // sqlite3_close(db);
         sqlite3_stmt *stmt;
         while (true)
         {
