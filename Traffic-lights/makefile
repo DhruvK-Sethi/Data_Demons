@@ -1,7 +1,7 @@
 all: compile_main_db execute_main_db compile_main  execute_main 
 recompile: clean all
 db: compile_main_db execute_main_db
-main: compile_main execute_main
+main:compile_main execute_main
 
 
 compile_main:
@@ -16,6 +16,8 @@ clean:
 	rm -f main *.o
 	rm -f main_db *.o
 	rm main.db
+clean_main:
+	rm -f main *.o
 	
 	
 

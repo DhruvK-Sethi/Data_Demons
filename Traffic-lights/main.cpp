@@ -1,7 +1,8 @@
 #include <iostream>
-#include <sqlite3.h>
+#include "C:\Users\Aarchie Maggu\miniconda3\pkgs\sqlite-3.40.1-h2bbff1b_0\Library\include\sqlite3.h"
 #include <thread>
 #include <windows.h>
+#include <string>
 using namespace std;
 
 class simulation
