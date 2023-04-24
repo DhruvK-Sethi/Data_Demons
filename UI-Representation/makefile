@@ -1,11 +1,18 @@
-all: compile link
+test: run
+	rm bin/*
 
-compile: 
-	g++ -c main.cpp -I "D:\SFML-2.5.1\include" -DSFML_STATIC
+run: build
+	./mapathon
 
-link: 
-	g++ main.o -o main -L"D:\SFML-2.5.1\lib" -lsfml-graphics-s -lsfml-window-s -lsfml-system-s -lopengl32 -lwinmm -lgdi32 -lsfml-main -mwindows
+build: game.o main.o
+	g++ bin/game.o bin/main.o -o mapathon -lsfml-graphics -lsfml-window -lsfml-system -lsqlite3
+
+main.o: main.cpp
+	g++ -c main.cpp -o bin/main.o
+
+game.o: game.cpp
+	g++ -c game.cpp -o bin/game.o
 
 clean:
-	rm -f main *.o
-	
+	rm bin/*.o mapathon
+
