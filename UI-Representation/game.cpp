@@ -26,6 +26,7 @@ void Game::setConsts(){
 void Game::initVariables(){
     this->window = nullptr;
     this->zoom = 2;
+    this->pan = sf::Vector2f(0,0);
 }
 
 void Game::initWindow(){
@@ -132,6 +133,22 @@ void Game::pollEvents(){
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::Add)) this->zoom += 0.1;
             else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Subtract)) this->zoom -= 0.1;
         } 
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
+        {
+            pan.x -= 10;
+        }
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
+        {
+            pan.x += 10;
+        }
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
+        {
+            pan.y -= 10;
+        }
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
+        {
+            pan.y += 10;
+        }
     }
 }
 sf::Vector2f Game::convertToScreen(float lat, float lon) {
@@ -140,8 +157,8 @@ sf::Vector2f Game::convertToScreen(float lat, float lon) {
     float latRange = this->MAX_LATITUDE - this->MIN_LATITUDE;
     float lonRange = this->MAX_LONGITUDE - this->MIN_LONGITUDE;
 
-    float x = (lon - lonCenter) / lonRange * this->zoom * this->WINDOW_WIDTH + this->WINDOW_WIDTH / 2;
-    float y = this->WINDOW_WIDTH - (lat - latCenter) / latRange * this->zoom * this->WINDOW_WIDTH - this->WINDOW_WIDTH / 2;
+    float x = (lon - lonCenter) / lonRange * this->zoom * this->WINDOW_WIDTH + this->WINDOW_WIDTH / 2 - this->pan.x;
+    float y = this->WINDOW_WIDTH - (lat - latCenter) / latRange * this->zoom * this->WINDOW_WIDTH - this->WINDOW_WIDTH / 2 - this->pan.y;
     return sf::Vector2f(x, y);
 }
 void Game::render(){

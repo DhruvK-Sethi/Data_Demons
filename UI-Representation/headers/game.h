@@ -28,6 +28,7 @@ class Game{
         std::unordered_map<int,std::vector<std::pair<double,double>>> db;
         sf::Texture map;
         float zoom;
+        sf::Vector2f pan;
 
         void insertIntoDB(double d);
         void initWindow();
