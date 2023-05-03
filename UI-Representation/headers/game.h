@@ -40,7 +40,7 @@ class Game{
         void loadData();
         void displayData();
         void crash(std::string error);
-        sf::Vector2f convertToScreen(float lat, float lon);
+        sf::Vector2f convertToScreen(double lat, double lon);
     public:
         Game();
         virtual ~Game();

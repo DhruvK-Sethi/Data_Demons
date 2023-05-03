@@ -18,10 +18,10 @@ Game::~Game(){
 void Game::setConsts(){
     this->WINDOW_HEIGHT = 1024;
     this->WINDOW_WIDTH = 1024;
-    this->MIN_LATITUDE = 75.0;
-    this->MAX_LATITUDE = 77.0;
-    this->MIN_LONGITUDE = 30.0;
-    this->MAX_LONGITUDE = 32.0;
+    this->MIN_LATITUDE = 76.25;
+    this->MAX_LATITUDE = 77.25;
+    this->MIN_LONGITUDE = 30.25;
+    this->MAX_LONGITUDE = 31.25;
 }
 
 void Game::initVariables(){
@@ -40,38 +40,11 @@ void Game::loadTextures(){
         this->crash("Failed to load map texture");
     }
 }
-std::vector<double> split(const std::string& input, char delimiter) {
-    std::vector<double> result;
-    std::stringstream ss(input);
-    std::string item;
-    while (std::getline(ss, item, delimiter)) {
-        result.push_back(std::stod(item));
-    }
-    return result;
-}
 
-void removeSquareBracketsAndSpaces(std::string& str)
-{
-    str.erase(std::remove(str.begin(), str.end(), '['), str.end());
-    str.erase(std::remove(str.begin(), str.end(), ']'), str.end());
-    str.erase(std::remove(str.begin(), str.end(), ' '), str.end());
-}
-std::vector<std::pair<double, double>> convertToPairs(const std::vector<double>& inputVector) {
-    std::vector<std::pair<double, double>> outputVector;
-
-    // Iterate over the elements of the input vector, creating pairs from every two adjacent elements
-    for (std::vector<double>::size_type i = 0; i < inputVector.size(); i += 2) {
-        double first = inputVector[i];
-        double second = (i + 1 < inputVector.size()) ? inputVector[i + 1] : 0.0;
-        outputVector.emplace_back(first, second);
-    }
-
-    return outputVector;
-}
 void Game::loadData(){
     sqlite3 *db;
     this->db.clear();
-    int rc = sqlite3_open("roads.db",&db);
+    int rc = sqlite3_open("network.db",&db);
     std::cout << std::setprecision(9);
     if (rc != SQLITE_OK) {
         this->crash("Unable to load database file: roads.db");
@@ -85,12 +58,8 @@ void Game::loadData(){
     }
 
     while (sqlite3_step(stmt) == SQLITE_ROW) {
-        int id = sqlite3_column_int(stmt, 0);
-        const char* coordsStr = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
-        std::string st = std::string(coordsStr);
-        removeSquareBracketsAndSpaces(st);
-        std::vector<double> split_string = split(st, ',');
-        this->db[id] = convertToPairs(split_string);
+        int id = sqlite3_column_int(stmt, 1);
+        this->db[id].push_back(std::pair<double,double>(sqlite3_column_double(stmt,3),sqlite3_column_double(stmt, 4)));
     }
 
     sqlite3_finalize(stmt);
@@ -121,10 +90,10 @@ void Game::update(){
     this->updateMousePos();
     this->pollEvents();
 
-    sf::Time elapsed = this->gameClock.restart();
-    float dt = elapsed.asSeconds();
-    float fps = 1.0f/dt;
-    std::cout << "FPS: " << fps << std::endl;
+    // sf::Time elapsed = this->gameClock.restart();
+    // float dt = elapsed.asSeconds();
+    // float fps = 1.0f/dt;
+    // std::cout << "FPS: " << fps << std::endl;
 }
 
 void Game::updateMousePos(){
@@ -157,9 +126,9 @@ void Game::pollEvents(){
         }
     }
 }
-sf::Vector2f Game::convertToScreen(float lat, float lon) {
-    float latCenter = (75 + 77) / 2.0f;
-    float lonCenter = (30 + 32) / 2.0f;
+sf::Vector2f Game::convertToScreen(double lat, double lon) {
+    float latCenter = (this->MIN_LATITUDE + this->MAX_LATITUDE) / 2.0f;
+    float lonCenter = (this->MIN_LONGITUDE + this->MAX_LONGITUDE) / 2.0f;
     float latRange = this->MAX_LATITUDE - this->MIN_LATITUDE;
     float lonRange = this->MAX_LONGITUDE - this->MIN_LONGITUDE;
 
