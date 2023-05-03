@@ -120,6 +120,11 @@ const bool Game::isRunning() const{
 void Game::update(){
     this->updateMousePos();
     this->pollEvents();
+
+    sf::Time elapsed = this->gameClock.restart();
+    float dt = elapsed.asSeconds();
+    float fps = 1.0f/dt;
+    std::cout << "FPS: " << fps << std::endl;
 }
 
 void Game::updateMousePos(){

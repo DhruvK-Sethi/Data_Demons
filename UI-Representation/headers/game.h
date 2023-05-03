@@ -4,6 +4,7 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Graphics/PrimitiveType.hpp>
 #include <SFML/Graphics/Texture.hpp>
+#include <SFML/System/Clock.hpp>
 #include <SFML/Window.hpp>
 #include <SFML/System.hpp>
 #include <sqlite3.h>
@@ -29,6 +30,7 @@ class Game{
         sf::Texture map;
         float zoom;
         sf::Vector2f pan;
+        sf::Clock gameClock;
 
         void insertIntoDB(double d);
         void initWindow();
