@@ -1,4 +1,5 @@
 #include "headers/game.h"
+#include <SFML/Graphics/PrimitiveType.hpp>
 #include <SFML/Window/Keyboard.hpp>
 
 Game::Game(){
@@ -174,6 +175,7 @@ void Game::render(){
     sf::CircleShape circle(1);
     circle.setFillColor(sf::Color::Red);
     for (const auto& kv : this->db){
+        sf::VertexArray points(sf::LineStrip);
         for (const auto& point : kv.second)
         {
             double latitude = point.first;
@@ -181,10 +183,16 @@ void Game::render(){
             if (latitude >= this->MIN_LATITUDE && latitude <= this->MAX_LATITUDE && longitude >= this->MIN_LONGITUDE && longitude <= this->MAX_LATITUDE)
             {
                 sf::Vector2f pos = convertToScreen(latitude, longitude);
+                if(pos.x == 0 || pos.y == 0){
+                    points.clear();
+                    continue;
+                }
                 circle.setPosition(pos.x, pos.y);
+                points.append(sf::Vertex(pos,sf::Color::Blue));
                 this->window->draw(circle);
             }
         }
+        if(points.getVertexCount() > 0)this->window->draw(points);
     }
 
     this->window->display();
