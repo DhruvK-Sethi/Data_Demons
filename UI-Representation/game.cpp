@@ -1,6 +1,7 @@
 #include "headers/game.h"
 #include <SFML/Graphics/PrimitiveType.hpp>
 #include <SFML/Window/Keyboard.hpp>
+#include <iterator>
 
 Game::Game(){
     this->setConsts();
@@ -22,12 +23,26 @@ void Game::setConsts(){
     this->MAX_LATITUDE = 77.25;
     this->MIN_LONGITUDE = 30.25;
     this->MAX_LONGITUDE = 31.25;
+    this->TRAVEL_SPEED = 40000;
 }
 
 void Game::initVariables(){
     this->window = nullptr;
     this->zoom = 2;
     this->pan = sf::Vector2f(0,0);
+    // this->path = {
+    //     {76.785, 30.761},
+    //     {76.779, 30.786},
+    //     {76.741, 30.795},
+    //     {76.700, 30.790},
+    //     {76.701, 30.757},
+    //     {76.730, 30.728},
+    //     {76.776, 30.724}
+    // };
+    this->path = {
+        {30.75662717693931, 76.81477838056973},
+        {30.699668886390242, 76.73907571664076}
+    };
 }
 
 void Game::initWindow(){
@@ -57,11 +72,14 @@ void Game::loadData(){
         this->crash("Error preparing statement: ");
     }
 
+    double last = 999999,min = 1.0;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int id = sqlite3_column_int(stmt, 1);
+        if(std::abs(sqlite3_column_double(stmt,3) - last) < min)min = std::abs(sqlite3_column_double(stmt,3) - last);
         this->db[id].push_back(std::pair<double,double>(sqlite3_column_double(stmt,3),sqlite3_column_double(stmt, 4)));
+        last = sqlite3_column_double(stmt,3);
     }
-
+    std::cout << min << std::endl;
     sqlite3_finalize(stmt);
     sqlite3_close(db);
 }
@@ -136,6 +154,22 @@ sf::Vector2f Game::convertToScreen(double lat, double lon) {
     float y = this->WINDOW_WIDTH - (lat - latCenter) / latRange * this->zoom * this->WINDOW_WIDTH - this->WINDOW_WIDTH / 2 - this->pan.y;
     return sf::Vector2f(x, y);
 }
+
+const double kEarthRadius = 6371000; // Earth's radius in meters
+
+double toRadians(double degrees) {
+    return degrees * M_PI / 180;
+}
+
+double distanceBetweenPoints(double lat1, double lon1, double lat2, double lon2) {
+    double dLat = toRadians(lat2 - lat1);
+    double dLon = toRadians(lon2 - lon1);
+
+    double a = pow(sin(dLat / 2), 2) + cos(toRadians(lat1)) * cos(toRadians(lat2)) * pow(sin(dLon / 2), 2);
+    double c = 2 * atan2(sqrt(a), sqrt(1 - a));
+
+    return kEarthRadius * c;
+}
 void Game::render(){
     this->window->clear();
     
@@ -162,12 +196,25 @@ void Game::render(){
                     continue;
                 }
                 circle.setPosition(pos.x, pos.y);
-                points.append(sf::Vertex(pos,sf::Color::Blue));
+                points.append(sf::Vertex(pos,sf::Color::Yellow));
                 this->window->draw(circle);
             }
         }
         if(points.getVertexCount() > 0)this->window->draw(points);
     }
+    sf::VertexArray points(sf::LineStrip);
+    std::pair<double, double> last;
+    double distance = 0;
+    for(auto node: this->path) {
+        if(last.first != 0) distance += distanceBetweenPoints(last.first, last.second, node.first, node.second);
+        sf::Vector2f pos = convertToScreen(node.first, node.second);
+        points.append(sf::Vertex(pos,sf::Color::Cyan));
+        last = node;
+    }
+    std::cout << "-----------------" << std::endl << "Distance: " << distance << " meters" << std::endl;
+    double time = distance / this->TRAVEL_SPEED;
+    std::cout << "Time: " << time << " hours, " << std::endl;
+    this->window->draw(points);
 
     this->window->display();
 }

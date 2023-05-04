@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <iomanip>
 #include <utility>
+#include <cmath>
 
 class Game{
     private:
@@ -25,12 +26,13 @@ class Game{
         sf::Vector2f mousePos;
         std::vector<sf::Vector2f> points;
         int WINDOW_WIDTH, WINDOW_HEIGHT;
-        double MIN_LATITUDE,MAX_LATITUDE,MIN_LONGITUDE,MAX_LONGITUDE;
+        double MIN_LATITUDE,MAX_LATITUDE,MIN_LONGITUDE,MAX_LONGITUDE,TRAVEL_SPEED;
         std::unordered_map<int,std::vector<std::pair<double,double>>> db;
         sf::Texture map;
         float zoom;
         sf::Vector2f pan;
         sf::Clock gameClock;
+        std::vector<std::pair<double,double>> path;
 
         void insertIntoDB(double d);
         void initWindow();
