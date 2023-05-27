@@ -40,7 +40,16 @@ bool AStar(const vector<vector<int>> &grid, int startX, int startY, int endX, in
     q.push(Node(startX, startY, 0));
     cost[startX][startY] = 0;
 
-    vector<vector<int>> directions = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}}; // Possible movement directions
+    vector<vector<int>> directions = {
+        {-1, 0},  // Up
+        {1, 0},   // Down
+        {0, -1},  // Left
+        {0, 1},   // Right
+        {-1, -1}, // Up-left (diagonal)
+        {-1, 1},  // Up-right (diagonal)
+        {1, -1},  // Down-left (diagonal)
+        {1, 1}    // Down-right (diagonal)
+    };
 
     while (!q.empty())
     {
@@ -150,11 +159,11 @@ public:
         // cin >> startX >> startY >> endX >> endY;
         startX = 10702;
         startY = 1657;
-        endX = 10718;
-        endY = 1658;
+        endX = 10721;
+        endY = 1657;
         cout << myArray[3633][2568] << endl
              << myArray[3639][2564] << endl;
-        drawLine(startX, startY, endX, endY, myArray);
+        // drawLine(startX, startY, endX, endY, myArray);
         // Call the A* algorithm.
         vector<vector<int>>
             path;
