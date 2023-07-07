@@ -179,8 +179,8 @@ public:
             cout << "The path is: ";
             for (int i = 0; i < path.size(); i++)
             {
-                cout << "(" << path[i][0] << ", " << path[i][1] << ") ";
-                // cout << "(" << convertb_1(path[i][0]) << ", " << convertb_2(path[i][1]) << ") ";
+                // cout << "(" << path[i][0] << ", " << path[i][1] << ") ";
+                cout << "(" << convertb_1(path[i][0]) << ", " << convertb_2(path[i][1]) << ") ";
             }
             cout << endl;
         }

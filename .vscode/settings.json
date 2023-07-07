@@ -2,5 +2,7 @@
     "files.associations": {
         "string": "cpp"
     },
-    "C_Cpp.errorSquiggles": "enabled"
+    "C_Cpp.errorSquiggles": "enabled",
+    "autoHide.autoHidePanel": false,
+    "autoHide.autoHideSideBar": false
 }

@@ -1,7 +1,6 @@
 #include "headers/game.h"
 #include <SFML/Graphics/PrimitiveType.hpp>
 #include <SFML/Window/Keyboard.hpp>
-#include <iterator>
 
 Game::Game(){
     this->setConsts();
@@ -40,8 +39,8 @@ void Game::initVariables(){
     //     {76.776, 30.724}
     // };
     this->path = {
-        {30.75662717693931, 76.81477838056973},
-        {30.699668886390242, 76.73907571664076}
+        {76.81477838056973, 30.75662717693931},
+        {76.73907571664076, 30.699668886390242}
     };
 }
 
@@ -59,7 +58,7 @@ void Game::loadTextures(){
 void Game::loadData(){
     sqlite3 *db;
     this->db.clear();
-    int rc = sqlite3_open("network.db",&db);
+    int rc = sqlite3_open("New_network.db",&db);
     std::cout << std::setprecision(9);
     if (rc != SQLITE_OK) {
         this->crash("Unable to load database file: roads.db");
@@ -211,9 +210,9 @@ void Game::render(){
         points.append(sf::Vertex(pos,sf::Color::Cyan));
         last = node;
     }
-    std::cout << "-----------------" << std::endl << "Distance: " << distance << " meters" << std::endl;
-    double time = distance / this->TRAVEL_SPEED;
-    std::cout << "Time: " << time << " hours, " << std::endl;
+    // std::cout << "-----------------" << std::endl << "Distance: " << distance << " meters" << std::endl;
+    // double time = distance / this->TRAVEL_SPEED;
+    // std::cout << "Time: " << time << " hours, " << std::endl;
     this->window->draw(points);
 
     this->window->display();
