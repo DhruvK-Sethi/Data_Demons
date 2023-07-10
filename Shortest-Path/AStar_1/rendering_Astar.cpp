@@ -75,11 +75,11 @@ public:
         {
             cout << "Opened database successfully" << endl;
         }
-        // myArray.resize(18622);
-        // for (int i = 0; i < 18622; ++i)
-        // {
-        //     myArray[i].resize(13734);
-        // }
+        grid.resize(GRID_SIZE);
+        for (int i = 0; i < GRID_SIZE; ++i)
+        {
+            grid[i].resize(13734);
+        }
 
         cout << "Array created successfuly..." << endl;
     }
@@ -244,10 +244,11 @@ public:
 
         while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
         {
+            cout << "First SQL statement..." << endl;
             double min1 = sqlite3_column_double(stmt, 0);
             double min2 = sqlite3_column_double(stmt, 1);
 
-            string sql_query = "SELECT double1, double2 FROM myTable WHERE double1 >= ? AND double1 < ? AND double2 >= ? AND double2 < ?;";
+            string sql_query = "SELECT double1, double2 FROM myTable WHERE double1 >= " + to_string(convertb_2(startRow)) + " AND double1 < " + to_string(convertb_2(endRow)) + " AND double2 >= " + to_string(convertb_1(startCol)) + " AND double2 < " + to_string(convertb_1(endCol)) + ";";
             sqlite3_stmt *stmt;
             int rc = sqlite3_prepare_v2(db, sql_query.c_str(), -1, &stmt, nullptr);
             if (rc != SQLITE_OK)
@@ -258,10 +259,10 @@ public:
             }
 
             // Bind the grid section coordinates to the SQL query
-            sqlite3_bind_int(stmt, 1, convertb_2(startRow));
-            sqlite3_bind_int(stmt, 2, convertb_2(endRow));
-            sqlite3_bind_int(stmt, 3, convertb_1(startCol));
-            sqlite3_bind_int(stmt, 4, convertb_1(endCol));
+            // sqlite3_bind_int(stmt, 1, convertb_2(startRow));
+            // sqlite3_bind_int(stmt, 2, convertb_2(endRow));
+            // sqlite3_bind_int(stmt, 3, convertb_1(startCol));
+            // sqlite3_bind_int(stmt, 4, convertb_1(endCol));
 
             int row = 0;
             int col = 0;
@@ -270,6 +271,9 @@ public:
             {
                 double double1 = sqlite3_column_double(stmt, 0);
                 double double2 = sqlite3_column_double(stmt, 1);
+                cout << "Second SQL statement..." << endl;
+                // cout << "Min1: " << min1 << endl;
+                // cout << "Min2: " << min2 << endl;
                 array(double1, double2, min1, min2);
             }
 
@@ -314,6 +318,10 @@ public:
         int endRow = startRow + GRID_SIZE;
         int startCol = startGridCol * GRID_SIZE;
         int endCol = startCol + GRID_SIZE;
+        cout << "StartRow: " << startRow << endl;
+        cout << "endRow: " << endRow << endl;
+        cout << "startCol: " << startCol << endl;
+        cout << "endCol: " << endCol << endl;
         loader(startRow, endRow, startCol, endCol, grid);
 
         // startX = 3592;
@@ -405,9 +413,14 @@ public:
     }
     void array(double double1, double double2, double min1, double min2)
     {
+
+        cout << "Min1: " << min1 << endl;
+        cout << "Min2: " << min2 << endl;
         int lat_1 = convert_1(double1, min1);
         int long_1 = convert_2(double2, min2);
         grid[lat_1][long_1] = 1;
+        cout << "Lat: " << lat_1 << endl;
+        cout << "Long: " << long_1 << endl;
         sum++;
     }
     int conv_1(double double1)
