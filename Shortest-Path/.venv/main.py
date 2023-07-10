@@ -16,7 +16,7 @@ def test(i,j):
 
 @app.route("/astar")
 def astar():
-    subprocess.run(["g++","test3.cpp","-o", "test3.exe", "-lsqlite3"])
+    # subprocess.run(["g++","test3.cpp","-o", "test3.exe", "-lsqlite3"])
 
     result = subprocess.run(["./test3.exe"], capture_output=True, text=True)
 
