@@ -222,220 +222,6 @@ bool AStar(std::vector<std::vector<int>> &grid, int startX, int startY, int endX
     return false;
 }
 
-class map
-{
-    int count = 0;
-    int no = 0;
-    int sum = 0;
-    char *messaggeError;
-    string data;
-    sqlite3 *db;
-    sqlite3_stmt *stmt;
-    sqlite3_stmt *stml;
-    vector<vector<int>> myArray;
-    int *numCoords;
-    vector<int> coords;
-    double ncost = 0;
-
-public:
-    map()
-    {
-
-        int rc = sqlite3_open("New_network.db", &db);
-        if (rc)
-        {
-            cerr << "Can't open database: " << endl
-                 << sqlite3_errmsg(db);
-        }
-        else
-        {
-            cout << "Opened database successfully" << endl;
-        }
-        myArray.resize(18622);
-        for (int i = 0; i < 18622; ++i)
-        {
-            myArray[i].resize(13734);
-        }
-
-        cout << "Array created successfuly..." << endl;
-    }
-
-    void loader()
-    {
-        cout << "Checking..." << endl;
-        string sql_query1 = "SELECT double1, double2 FROM myTable ;";
-        int rc = sqlite3_prepare_v2(db, sql_query1.c_str(), -1, &stmt, nullptr);
-        if (rc != SQLITE_OK)
-        {
-            cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << endl;
-            sqlite3_close(db);
-            return;
-        }
-
-        bool result = false;
-        while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
-        {
-            double double1 = sqlite3_column_double(stmt, 0);
-            double double2 = sqlite3_column_double(stmt, 1);
-            array(double2, double1);
-        }
-        cout << "Process finished...: " << sum << endl;
-        cout << myArray[3591][2603] << endl
-             << myArray[3633][2568] << endl;
-
-        if (rc != SQLITE_DONE)
-        {
-            cerr << "Failed to execute statement: " << sqlite3_errmsg(db) << endl;
-        }
-    }
-
-    vector<vector<int>> driver()
-    {
-        loader();
-
-        cout << "Calling A-star..." << endl;
-
-        int startX, startY, endX, endY;
-        startX = convert_1(30.674951);
-        startY = convert_2(76.712366);
-
-        cout << "starX: " << startX << endl;
-        cout << "starY: " << startY << endl;
-        endX = convert_1(30.750933);
-        endY = convert_2(76.740141);
-
-        cout
-            << fixed << setprecision(5) << "EndX: " << convertb_2(endX) << endl
-            << "EndY: " << convertb_1(endY) << endl;
-
-        cout
-            << myArray[startX][startY] << endl
-            << myArray[endX][endY] << endl;
-
-        vector<vector<int>>
-            path;
-        vector<vector<int>>
-            npath;
-        bool foundPath = AStar(myArray, startX, startY, endX, endY, path);
-
-        if (foundPath)
-        {
-            cout << "The cost of the shortest path is " << path.size() - 1 << endl;
-
-            cout << "The path is: " << endl;
-
-            for (int i = 0; i < path.size(); i++)
-            {
-
-                if (i < path.size() - 1)
-                {
-                    if (abs(path[i + 1][0] - path[i][0]) > 1 || abs(path[i + 1][1] - path[i][1]) > 1)
-                    {
-                        drawLine(path[i + 1][0], path[i + 1][1], path[i][0], path[i][1], npath, i);
-                    }
-                }
-
-                npath.push_back({path[i][0], path[i][1]});
-            }
-
-            cout << "Step1..." << endl;
-
-            sortPath(npath);
-            for (int i = 0; i < npath.size() - 1; i++)
-            {
-                double startx = convertb_1(npath[i][0]);
-                double starty = convertb_2(npath[i][1]);
-                double endx = convertb_1(npath[i + 1][0]);
-                double endy = convertb_2(npath[i + 1][1]);
-
-                ncost += calculateDistance(startx, starty, endx, endy);
-            }
-            cout << "Step2..." << endl;
-            for (int i = 0; i < npath.size(); i++)
-            {
-                // cout << "(" << npath[i][0] << ", " << npath[i][1] << ") ";
-                cout << "(" << convertb_1(npath[i][0]) << ", " << convertb_2(npath[i][1]) << ") ";
-            }
-
-            cout << endl;
-            cout << "Total cost: " << ncost / 100 << endl;
-            cout << "The cost of the shortest path is " << npath.size() << endl;
-        }
-        else
-        {
-            cout << "No path found." << endl;
-        }
-
-        sqlite3_finalize(stmt);
-        return npath;
-    }
-
-    double convertb_1(int lat)
-    {
-        double lati = static_cast<double>(lat) / 100000.0;
-        lati = (lati + 30.65364);
-        return lati;
-    }
-    double convertb_2(int long_1)
-    {
-        double longi = static_cast<double>(long_1) / 100000.0;
-        longi = (longi + 76.66046);
-        return longi;
-    }
-    int convert_1(double double1)
-    {
-        double lati;
-        double1 = round(double1 * 100000) / 100000;
-        lati = (double1 - 30.65364) * 100000;
-        int lat_1 = lati;
-        return lat_1;
-    }
-    int convert_2(double double2)
-    {
-        double longi;
-        double2 = round(double2 * 100000) / 100000;
-        longi = (double2 - 76.66046) * 100000;
-        int long_1 = longi;
-        return long_1;
-    }
-
-    void array(double double1, double double2)
-    {
-        int lat_1 = convert_1(double1);
-        int long_1 = convert_2(double2);
-        myArray[lat_1][long_1] = 1;
-        sum++;
-    }
-
-    void drawLine(int x0, int y0, int x1, int y1, vector<vector<int>> &npath, int j)
-    {
-
-        int dx = abs(x1 - x0);
-        int dy = abs(y1 - y0);
-        int sx = (x0 < x1) ? 1 : -1;
-        int sy = (y0 < y1) ? 1 : -1;
-        int err = dx - dy;
-
-        while (x0 != x1 || y0 != y1)
-        {
-
-            npath.push_back({x0, y0});
-
-            int e2 = err * 2;
-            if (e2 > -dy)
-            {
-                err -= dy;
-                x0 += sx;
-            }
-            if (e2 < dx)
-            {
-                err += dx;
-                y0 += sy;
-            }
-        }
-    }
-};
-
 class Car
 {
 public:
@@ -447,7 +233,6 @@ public:
 
     void move(double deltaTime)
     {
-
         position += speed * deltaTime;
     }
 
@@ -540,14 +325,254 @@ private:
     double maxSteeringAngle;
     double perceptionTime;
     double steeringAngle;
+    vector<vector<int>> path;
+};
+
+class Map
+{
+    int count = 0;
+    int no = 0;
+    int sum = 0;
+    char *messageError;
+    string data;
+    sqlite3 *db;
+    sqlite3_stmt *stmt;
+    sqlite3_stmt *stml;
+    vector<vector<int>> myArray;
+    vector<int> coords;
+    double ncost = 0;
+    vector<vector<int>> path;
+    vector<vector<int>> npath;
+    vector<vector<double>> fpath;
+
+public:
+    Map()
+    {
+        // cout << "Constructor..." << endl;
+        int rc = sqlite3_open("New_network.db", &db);
+        if (rc)
+        {
+            cerr << "Can't open database: " << endl
+                 << sqlite3_errmsg(db);
+        }
+        else
+        {
+            cout << "Opened database successfully" << endl;
+        }
+        myArray.resize(18622);
+        for (int i = 0; i < 18622; ++i)
+        {
+            myArray[i].resize(13734);
+        }
+        cout << "Array created successfully..." << endl;
+    }
+
+    void reset()
+    {
+        // Reset all necessary variables and vectors to their initial values
+        count = 0;
+        no = 0;
+        sum = 0;
+        coords.clear();
+        path.clear();
+        npath.clear();
+        fpath.clear();
+        ncost = 0;
+    }
+
+    void loader()
+    {
+        reset();
+        cout << "Checking..." << endl;
+        string sql_query1 = "SELECT double1, double2 FROM myTable ;";
+        int rc = sqlite3_prepare_v2(db, sql_query1.c_str(), -1, &stmt, nullptr);
+        if (rc != SQLITE_OK)
+        {
+            cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << endl;
+            sqlite3_close(db);
+            return;
+        }
+
+        bool result = false;
+        while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
+        {
+            double double1 = sqlite3_column_double(stmt, 0);
+            double double2 = sqlite3_column_double(stmt, 1);
+            array(double2, double1);
+        }
+        cout << "Process finished: " << sum << endl;
+        cout << myArray[3591][2603] << endl
+             << myArray[3633][2568] << endl;
+
+        if (rc != SQLITE_DONE)
+        {
+            cerr << "Failed to execute statement: " << sqlite3_errmsg(db) << endl;
+        }
+
+        sqlite3_finalize(stmt);
+        stmt = nullptr; // Clear the stmt variable
+    }
+
+    vector<vector<double>> driver(double sX, double sY, double eX, double eY)
+    {
+        // loader();
+
+        cout << "Calling A-star..." << endl;
+
+        int startX, startY, endX, endY;
+        startX = convert_1(sX);
+        startY = convert_2(sY);
+        endX = convert_1(eX);
+        endY = convert_2(eY);
+
+        cout << fixed << setprecision(5) << "EndX: " << convertb_2(endX) << endl
+             << "EndY: " << convertb_1(endY) << endl;
+
+        cout << myArray[startX][startY] << endl
+             << myArray[endX][endY] << endl;
+
+        bool foundPath = AStar(myArray, startX, startY, endX, endY, path);
+
+        if (foundPath)
+        {
+            cout << "The cost of the shortest path is " << path.size() - 1 << endl;
+
+            cout << "The path is: " << endl;
+
+            for (int i = 0; i < path.size(); i++)
+            {
+                if (i < path.size() - 1)
+                {
+                    if (abs(path[i + 1][0] - path[i][0]) > 1 || abs(path[i + 1][1] - path[i][1]) > 1)
+                    {
+                        drawLine(path[i + 1][0], path[i + 1][1], path[i][0], path[i][1], npath, i);
+                    }
+                }
+
+                npath.push_back({path[i][0], path[i][1]});
+            }
+
+            cout << "Step1..." << endl;
+
+            sortPath(npath);
+            for (int i = 0; i < npath.size() - 1; i++)
+            {
+                double startx = convertb_1(npath[i][0]);
+                double starty = convertb_2(npath[i][1]);
+                double endx = convertb_1(npath[i + 1][0]);
+                double endy = convertb_2(npath[i + 1][1]);
+
+                ncost += calculateDistance(startx, starty, endx, endy);
+            }
+            cout << "Step2..." << endl;
+            path.clear();
+            for (int i = 0; i < npath.size(); i++)
+            {
+                fpath.push_back({convertb_1(npath[i][0]), convertb_2(npath[i][1])});
+            }
+
+            cout << endl;
+            cout << "Total cost: " << ncost / 100 << endl;
+            cout << "The cost of the shortest path is " << npath.size() << endl;
+        }
+        else
+        {
+            cout << "No path found." << endl;
+        }
+
+        return fpath;
+    }
+
+    double convertb_1(int lat)
+    {
+        double lati = static_cast<double>(lat) / 100000.0;
+        lati = (lati + 30.65364);
+        return lati;
+    }
+
+    double convertb_2(int long_1)
+    {
+        double longi = static_cast<double>(long_1) / 100000.0;
+        longi = (longi + 76.66046);
+        return longi;
+    }
+
+    int convert_1(double double1)
+    {
+        double lati;
+        double1 = round(double1 * 100000) / 100000;
+        lati = (double1 - 30.65364) * 100000;
+        int lat_1 = lati;
+        return lat_1;
+    }
+
+    int convert_2(double double2)
+    {
+        double longi;
+        double2 = round(double2 * 100000) / 100000;
+        longi = (double2 - 76.66046) * 100000;
+        int long_1 = longi;
+        return long_1;
+    }
+
+    void array(double double1, double double2)
+    {
+        int lat_1 = convert_1(double1);
+        int long_1 = convert_2(double2);
+        myArray[lat_1][long_1] = 1;
+        sum++;
+    }
+
+    void drawLine(int x0, int y0, int x1, int y1, vector<vector<int>> &npath, int j)
+    {
+        int dx = abs(x1 - x0);
+        int dy = abs(y1 - y0);
+        int sx = (x0 < x1) ? 1 : -1;
+        int sy = (y0 < y1) ? 1 : -1;
+        int err = dx - dy;
+
+        while (x0 != x1 || y0 != y1)
+        {
+            npath.push_back({x0, y0});
+
+            int e2 = err * 2;
+            if (e2 > -dy)
+            {
+                err -= dy;
+                x0 += sx;
+            }
+            if (e2 < dx)
+            {
+                err += dx;
+                y0 += sy;
+            }
+        }
+    }
+
+    ~Map()
+    {
+        sqlite3_finalize(stmt);
+        sqlite3_close(db);
+
+        myArray.clear();
+        coords.clear();
+        path.clear();
+        npath.clear();
+        fpath.clear();
+    }
 };
 
 class Db
 {
     vector<vector<double>> inputs;
+    vector<vector<double>> path;
     sqlite3_stmt *stmt;
     sqlite3 *db;
     int rc;
+    int max1, vmax1, max2, vmax2;
+    int source, destination;
+    int count = 0;
+    Map m;
 
 public:
     Db()
@@ -584,17 +609,19 @@ public:
             cout << max << endl;
             vmax = (rand() % max) + 1;
         }
+        sqlite3_finalize(stmt);
         return vmax;
     }
-    void driver()
+
+    void genrand()
     {
+        path.clear();
         random_device rd;
         mt19937 gen(rd());
         uniform_int_distribution<> dis(1, 11106);
 
-        int max1, vmax1, max2, vmax2;
-        int source = dis(gen);
-        int destination = dis(gen);
+        source = dis(gen);
+        destination = dis(gen);
 
         while (source == destination)
         {
@@ -604,16 +631,45 @@ public:
              << "Destination: " << destination << endl;
         vmax1 = get_max(source);
         vmax2 = get_max(destination);
-        cout << "Vmax1: " << vmax1 << endl
-             << "Vmax2: " << vmax2 << endl;
+        // cout << "Vmax1: " << vmax1 << endl
+        //      << "Vmax2: " << vmax2 << endl;
         getval(source, vmax1);
         getval(destination, vmax2);
-        cout << "Long1: " << inputs[0][0] << endl
-             << "Lat1: " << inputs[0][1] << endl
-             << "Long2: " << inputs[1][0] << endl
-             << "Lat2: " << inputs[1][1] << endl;
-        map m;
-        m.driver();
+        // cout << "Long1: " << inputs[0][0] << endl
+        //      << "Lat1: " << inputs[0][1] << endl
+        //      << "Long2: " << inputs[1][0] << endl
+        //      << "Lat2: " << inputs[1][1] << endl;
+    }
+
+    void getpath()
+    {
+        cout << "Count: " << count << endl;
+        count++;
+        genrand();
+        path = m.driver(inputs[0][1], inputs[0][0], inputs[1][1], inputs[1][0]);
+
+        if (path.size() == 0)
+        {
+            getpath();
+        }
+
+        // for (int i = 0; i < path.size(); i++)
+        // {
+        //     cout << "(" << path[i][0] << ", " << path[i][1] << ") ";
+        // }
+        if (path.size() != 0)
+        {
+            cout << "Found path of lenght: " << path.size() << endl;
+        }
+    }
+    void driver()
+    {
+        m.loader(); // pls call only 1 time
+
+        for (int i = 0; i < 3; i++)
+        {
+            getpath();
+        }
     }
 
     void getval(int source, int vectorIn_1)
@@ -638,6 +694,12 @@ public:
                  << "Longitude: " << double1 << endl;
             inputs.push_back({double1, double2});
         }
+        sqlite3_finalize(stmt);
+    }
+    ~Db()
+    {
+        sqlite3_finalize(stmt);
+        sqlite3_close(db);
     }
 };
 
