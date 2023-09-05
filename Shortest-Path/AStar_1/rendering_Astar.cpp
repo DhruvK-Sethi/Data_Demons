@@ -11,7 +11,7 @@ using namespace std;
 
 const int row = 13734;
 const int col = 18622;
-const int GRID_SIZE = 1000; // Size of each grid section
+const int GRID_SIZE = 1000;
 
 bool compareCoordinates(vector<int> &a, vector<int> &b)
 {
