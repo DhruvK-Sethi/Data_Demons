@@ -7,11 +7,78 @@
 #include <math.h>
 #include <chrono>
 #include <random>
+#include <iomanip>
+#include <ios>
 using namespace std;
 
 const int row = 13734;
 const int col = 18622;
-const int GRID_SIZE = 1000;
+const int GRID_SIZE = 1000; // Size of each grid section
+const double EarthRadiusKm = 6371.0;
+
+double toRadians(double degrees)
+{
+    return degrees * M_PI / 180.0;
+}
+
+double calculateDistance(double lat1, double lon1, double lat2, double lon2)
+{
+    double a = 6378137.0;         // semi-major axis of the ellipsoid
+    double b = 6356752.314245;    // semi-minor axis of the ellipsoid
+    double f = 1 / 298.257223563; // flattening of the ellipsoid
+
+    double L = toRadians(lon2 - lon1);
+
+    double U1 = atan((1 - f) * tan(toRadians(lat1)));
+    double U2 = atan((1 - f) * tan(toRadians(lat2)));
+    double sinU1 = sin(U1), cosU1 = cos(U1);
+    double sinU2 = sin(U2), cosU2 = cos(U2);
+
+    double lambda = L;
+    double lambdaPrev;
+    double sinLambda, cosLambda;
+    double sinSigma, cosSigma, sigma;
+    double sinAlpha, cosSqAlpha;
+    double cos2SigmaM;
+    double C;
+
+    do
+    {
+        sinLambda = sin(lambda);
+        cosLambda = cos(lambda);
+        sinSigma = sqrt((cosU2 * sinLambda) * (cosU2 * sinLambda) +
+                        (cosU1 * sinU2 - sinU1 * cosU2 * cosLambda) *
+                            (cosU1 * sinU2 - sinU1 * cosU2 * cosLambda));
+        if (sinSigma == 0)
+            return 0; // coincident points
+        cosSigma = sinU1 * sinU2 + cosU1 * cosU2 * cosLambda;
+        sigma = atan2(sinSigma, cosSigma);
+        sinAlpha = cosU1 * cosU2 * sinLambda / sinSigma;
+        cosSqAlpha = 1 - sinAlpha * sinAlpha;
+        cos2SigmaM = cosSigma - 2 * sinU1 * sinU2 / cosSqAlpha;
+        C = f / 16 * cosSqAlpha * (4 + f * (4 - 3 * cosSqAlpha));
+        lambdaPrev = lambda;
+        lambda = L +
+                 (1 - C) * f * sinAlpha *
+                     (sigma + C * sinSigma *
+                                  (cos2SigmaM + C * cosSigma *
+                                                    (-1 + 2 * cos2SigmaM * cos2SigmaM)));
+    } while (std::abs(lambda - lambdaPrev) > 1e-12);
+
+    double uSq = cosSqAlpha * (a * a - b * b) / (b * b);
+    double A = 1 + uSq / 16384 * (4096 + uSq * (-768 + uSq * (320 - 175 * uSq)));
+    double B = uSq / 1024 * (256 + uSq * (-128 + uSq * (74 - 47 * uSq)));
+    double deltaSigma =
+        B * sinSigma *
+        (cos2SigmaM + B / 4 *
+                          (cosSigma * (-1 + 2 * cos2SigmaM * cos2SigmaM) -
+                           B / 6 * cos2SigmaM * (-3 + 4 * sinSigma * sinSigma) *
+                               (-3 + 4 * cos2SigmaM * cos2SigmaM)));
+
+    double distance = b * A * (sigma - deltaSigma);
+
+    return distance / 1000.0; // Convert to kilometers
+}
 
 bool compareCoordinates(vector<int> &a, vector<int> &b)
 {
@@ -48,6 +115,7 @@ bool isInRadius(int x, int y, int centerX, int centerY, int radius)
 
 class map
 {
+
     int count = 0;
     int no = 0;
     int sum = 0;
@@ -63,7 +131,6 @@ class map
 public:
     map()
     {
-        vector<vector<int>> grid(GRID_SIZE, vector<int>(GRID_SIZE));
 
         int rc = sqlite3_open("New_network.db", &db);
         if (rc)
@@ -78,17 +145,21 @@ public:
         grid.resize(GRID_SIZE);
         for (int i = 0; i < GRID_SIZE; ++i)
         {
-            grid[i].resize(13734);
+            grid[i].resize(GRID_SIZE);
         }
 
         cout << "Array created successfuly..." << endl;
     }
 
-    bool AStar(const vector<vector<int>> &grid, int numRows, int numCols, int startX, int startY, int endX, int endY, vector<vector<int>> &path)
+    bool AStar(const vector<vector<int>> &grid, int numRows, int numCols, int startX, int startY, int endX, int endY, int startRow, int endRow, int startCol, int endCol, vector<vector<int>> &path)
     {
-        if (grid[startX][startY] == 0 || grid[endX][endY] == 0)
+        bool isStuck = true;
+        cout << "Checking..." << endl;
+        if (grid[startX][startY] == 0)
         {
-            return false;
+            cout << "Out of boundary..." << endl;
+            // return false;
+            isStuck = true;
         }
 
         priority_queue<Node> q;
@@ -116,9 +187,9 @@ public:
 
             if (cur.x == endX && cur.y == endY)
             {
-                // Reconstruct the path
                 while (cur.x != -1 && cur.y != -1)
                 {
+                    cout << "Exp: (" << cur.x << ", " << cur.y << ")" << endl;
                     path.push_back({cur.x, cur.y});
                     int prevX = parent[cur.x][cur.y].first;
                     int prevY = parent[cur.x][cur.y].second;
@@ -128,7 +199,6 @@ public:
 
                 return true;
             }
-
             bool isStuck = true;
             for (const auto &dir : directions)
             {
@@ -177,34 +247,87 @@ public:
                 }
             }
 
-            // Check if the current node is at the boundary of the loaded grid section
             if (cur.x == 0 || cur.x == numRows - 1 || cur.y == 0 || cur.y == numCols - 1)
             {
 
-                int currentRow = cur.x / GRID_SIZE;
-                int currentCol = cur.y / GRID_SIZE;
+                cout << "StartRow: " << startRow << endl;
+                cout << "endRow: " << endRow << endl;
+                cout << "startCol: " << startCol << endl;
+                cout << "endCol: " << endCol << endl;
 
-                // Load the next grid section
-                int startRow = currentRow * GRID_SIZE;
-                int endRow = startRow + GRID_SIZE;
-                int startCol = currentCol * GRID_SIZE;
-                int endCol = startCol + GRID_SIZE;
+                vector<vector<int>> nextGrid;
+                nextGrid.resize(GRID_SIZE);
+                for (int i = 0; i < GRID_SIZE; ++i)
+                {
+                    nextGrid[i].resize(GRID_SIZE);
+                }
 
-                vector<vector<int>> nextGrid(GRID_SIZE, vector<int>(GRID_SIZE));
-                loader(startRow, endRow, startCol, endCol, nextGrid);
-
-                int newX = cur.x % GRID_SIZE;
-                int newY = cur.y % GRID_SIZE;
-
-                int updatedStartX = newX;
-                int updatedStartY = newY;
+                int updatedStartX = cur.x % GRID_SIZE;
+                int updatedStartY = cur.y % GRID_SIZE;
                 int updatedEndX = endX % GRID_SIZE;
                 int updatedEndY = endY % GRID_SIZE;
                 int updatedNumRows = nextGrid.size();
                 int updatedNumCols = nextGrid[0].size();
                 vector<vector<int>> updatedPath;
 
-                bool success = AStar(nextGrid, updatedNumRows, updatedNumCols, updatedStartX, updatedStartY, updatedEndX, updatedEndY, updatedPath);
+                cout << "StartX: " << updatedStartX << endl;
+                cout << "StartY: " << updatedStartY << endl;
+
+                int dx = startRow - updatedStartX;
+                int dy = startCol - updatedStartY;
+                string direction;
+
+                if (abs(dx) > abs(dy))
+                {
+                    if (dx > 0)
+                    {
+                        direction = "New grid loaded to the right.";
+                        startRow += 1000;
+                        endRow += 1000;
+                    }
+                    else if (dx < 0)
+                    {
+                        direction = "New grid loaded to the left.";
+                        startRow -= 1000;
+                        endRow -= 1000;
+                    }
+                    else
+                    {
+                        direction = "No horizontal movement.";
+                    }
+                }
+                else
+                {
+                    if (dy > 0)
+                    {
+                        direction = "New grid loaded below.";
+                        startCol -= 1000;
+                        endCol -= 1000;
+                    }
+                    else if (dy < 0)
+                    {
+                        direction = "New grid loaded above.";
+                        startCol += 1000;
+                        endCol += 1000;
+                    }
+                    else
+                    {
+                        direction = "No vertical movement.";
+                    }
+                }
+
+                cout << direction << endl;
+                cout << endl
+                     << endl
+                     << endl;
+                cout << "StartRow: " << startRow << endl;
+                cout << "EndRow: " << endRow << endl;
+                cout << "StartCol: " << startCol << endl;
+                cout << "EndCol: " << endCol << endl;
+
+                loader(startRow, endRow, startCol, endCol, nextGrid);
+
+                bool success = AStar(nextGrid, updatedNumRows, updatedNumCols, updatedStartX, updatedStartY, endX, endY, startRow, endRow, startCol, endCol, updatedPath);
 
                 if (success)
                 {
@@ -233,7 +356,7 @@ public:
     void loader(int startRow, int endRow, int startCol, int endCol, vector<vector<int>> &grid)
     {
         cout << "Loading grid section..." << endl;
-        string sql_query1 = "SELECT MIN(double1), MIN(double2) FROM myTable WHERE double1 >= " + to_string(convertb_2(startRow)) + " AND double1 <= " + to_string(convertb_2(endRow)) + " AND double2 >= " + to_string(convertb_1(startCol)) + " AND double2 <= " + to_string(convertb_1(endCol)) + ";";
+        string sql_query1 = "SELECT MIN(double1), MIN(double2),MAX(double1),MAX(double2) FROM myTable WHERE double1 >= " + to_string(convertb_2(startRow)) + " AND double1 < " + to_string(convertb_2(endRow)) + " AND double2 >= " + to_string(convertb_1(startCol)) + " AND double2 < " + to_string(convertb_1(endCol)) + ";";
         int rc = sqlite3_prepare_v2(db, sql_query1.c_str(), -1, &stmt, nullptr);
         if (rc != SQLITE_OK)
         {
@@ -244,11 +367,12 @@ public:
 
         while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
         {
-            cout << "First SQL statement..." << endl;
             double min1 = sqlite3_column_double(stmt, 0);
             double min2 = sqlite3_column_double(stmt, 1);
+            double max1 = sqlite3_column_double(stmt, 2);
+            double max2 = sqlite3_column_double(stmt, 3);
 
-            string sql_query = "SELECT double1, double2 FROM myTable WHERE double1 >= " + to_string(convertb_2(startRow)) + " AND double1 <= " + to_string(convertb_2(endRow)) + " AND double2 >= " + to_string(convertb_1(startCol)) + " AND double2 <= " + to_string(convertb_1(endCol)) + ";";
+            string sql_query = "SELECT double1, double2 FROM myTable WHERE double1 >= " + to_string(min1) + " AND double1 < " + to_string(max1) + " AND double2 >= " + to_string(min2) + " AND double2 < " + to_string(max2) + ";";
             sqlite3_stmt *stmt;
             int rc = sqlite3_prepare_v2(db, sql_query.c_str(), -1, &stmt, nullptr);
             if (rc != SQLITE_OK)
@@ -258,24 +382,17 @@ public:
                 return;
             }
 
-            // Bind the grid section coordinates to the SQL query
-            // sqlite3_bind_int(stmt, 1, convertb_2(startRow));
-            // sqlite3_bind_int(stmt, 2, convertb_2(endRow));
-            // sqlite3_bind_int(stmt, 3, convertb_1(startCol));
-            // sqlite3_bind_int(stmt, 4, convertb_1(endCol));
-
             int row = 0;
             int col = 0;
 
             while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
             {
+
                 double double1 = sqlite3_column_double(stmt, 0);
                 double double2 = sqlite3_column_double(stmt, 1);
-                cout << "Second SQL statement..." << endl;
-                // cout << "Min1: " << min1 << endl;
-                // cout << "Min2: " << min2 << endl;
-                array(double1, double2, min1, min2);
+                array(double1, double2, min1, min2, grid);
             }
+            cout << "Grid..." << endl;
 
             if (rc != SQLITE_DONE)
             {
@@ -290,7 +407,7 @@ public:
         {
             cerr << "Failed to execute statement: " << sqlite3_errmsg(db) << endl;
         }
-
+        cout << "Sum: " << sum << endl;
         cout << "Grid section loaded." << endl;
     }
 
@@ -300,15 +417,14 @@ public:
         cout << "Calling A-star..." << endl;
 
         int startX, startY, endX, endY;
-        startY = conv_2(76.76614);
-        startX = conv_1(30.726899);
-        cout << "starX: " << startX << endl;
-        cout << "starY: " << startY << endl;
-        endX = 7530;
-        endY = 10401;
-
-        int numGridsRow = (row + GRID_SIZE - 1) / GRID_SIZE;
-        int numGridsCol = (col + GRID_SIZE - 1) / GRID_SIZE;
+        startX = 10567;
+        startY = 7326;
+        cout << "starX: " << convertb_2(startX) << endl;
+        cout << "starY: " << convertb_1(startY) << endl;
+        endX = 10401;
+        endY = 7530;
+        cout << "endX: " << convertb_2(endX) << endl;
+        cout << "endY: " << convertb_1(endY) << endl;
 
         int startGridRow = startX / GRID_SIZE;
         int startGridCol = startY / GRID_SIZE;
@@ -318,27 +434,30 @@ public:
         int endRow = startRow + GRID_SIZE;
         int startCol = startGridCol * GRID_SIZE;
         int endCol = startCol + GRID_SIZE;
+
+        cout << endl
+             << endl;
+        cout << "Initial..." << endl;
         cout << "StartRow: " << startRow << endl;
         cout << "endRow: " << endRow << endl;
         cout << "startCol: " << startCol << endl;
         cout << "endCol: " << endCol << endl;
+
         loader(startRow, endRow, startCol, endCol, grid);
 
-        // startX = 3592;
-        // startY = 2604;
-        // endX = 3639;
-        // endY = 2564;
+        cout << "Hello..." << endl;
+        cout << "StarX:" << startX % GRID_SIZE << endl;
+        cout << "StarY:" << startY % GRID_SIZE << endl;
+        cout << "endX: " << endX % GRID_SIZE << endl;
+        cout << "endY: " << endY % GRID_SIZE << endl;
 
-        // cin >> startX >> startY >> endX >> endY;
-        cout
-            << grid[startX][startY] << endl
-            << grid[endX][endY] << endl;
+        cout << grid[startX % GRID_SIZE][startY % GRID_SIZE] << endl;
 
         vector<vector<int>>
             path;
         vector<vector<int>>
             npath;
-        bool foundPath = AStar(grid, GRID_SIZE, GRID_SIZE, startX % GRID_SIZE, startY % GRID_SIZE, endX % GRID_SIZE, endY % GRID_SIZE, path);
+        bool foundPath = AStar(grid, GRID_SIZE, GRID_SIZE, startX % GRID_SIZE, startY % GRID_SIZE, endX % GRID_SIZE, endY % GRID_SIZE, startRow, endRow, startCol, endCol, path);
 
         // Print the output.
         if (foundPath)
@@ -357,10 +476,7 @@ public:
                         drawLine(path[i + 1][0], path[i + 1][1], path[i][0], path[i][1], npath, i);
                     }
                 }
-                // cout << "(" << path[i][0] << ", " << path[i][1] << ") ";
-
                 npath.push_back({path[i][0], path[i][1]});
-                // cout << "(" << convertb_1(path[i][0]) << ", " << convertb_2(path[i][1]) << ") ";
             }
 
             cout << "The cost of the shortest path is " << npath.size() - 1 << endl;
@@ -411,16 +527,11 @@ public:
         int long_1 = longi;
         return long_1;
     }
-    void array(double double1, double double2, double min1, double min2)
+    void array(double double1, double double2, double min1, double min2, vector<vector<int>> &nextgrid)
     {
-
-        cout << "Min1: " << min1 << endl;
-        cout << "Min2: " << min2 << endl;
         int lat_1 = convert_1(double1, min1);
         int long_1 = convert_2(double2, min2);
-        grid[lat_1][long_1] = 1;
-        cout << "Lat: " << lat_1 << endl;
-        cout << "Long: " << long_1 << endl;
+        nextgrid[lat_1][long_1] = 1;
         sum++;
     }
     int conv_1(double double1)
@@ -451,11 +562,7 @@ public:
 
         while (x0 != x1 || y0 != y1)
         {
-            // grid[x0][y0] = 1;
-            // cout << "(" << x0 << ", " << y0 << ") ";
             npath.push_back({x0, y0});
-
-            // path.insert(path.begin() + j, {x0, y0});
 
             int e2 = err * 2;
             if (e2 > -dy)

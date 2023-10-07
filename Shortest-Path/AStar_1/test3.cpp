@@ -90,6 +90,10 @@ bool AStar(std::vector<std::vector<int>> &grid, int startX, int startY, int endX
                 cur.y = prevY;
             }
 
+            cout << "priority Queue: " << q.size() << endl;
+            cout << "Cost Vector: " << cost.size() << "x" << cost[0].size() << endl;
+            cout << "Parent Vector: " << parent.size() << "x" << parent[0].size() << endl;
+
             return true;
         }
 
