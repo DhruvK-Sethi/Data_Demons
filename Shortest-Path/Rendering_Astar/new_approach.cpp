@@ -151,7 +151,7 @@ public:
         cout << "Array created successfuly..." << endl;
     }
 
-    bool AStar(const vector<vector<int>> &grid, int numRows, int numCols, int startX, int startY, int endX, int endY, int startRow, int endRow, int startCol, int endCol, vector<vector<int>> &path)
+    bool AStar(vector<vector<int>> &grid, int numRows, int numCols, int startX, int startY, int endX, int endY, int startRow, int endRow, int startCol, int endCol, vector<vector<int>> &path)
     {
         bool isStuck = true;
         cout << "Checking..." << endl;
@@ -232,6 +232,7 @@ public:
 
                         if (nextX >= 0 && nextX < numRows && nextY >= 0 && nextY < numCols && grid[nextX][nextY] == 1 && cost[nextX][nextY] == INT_MAX)
                         {
+                            // cout << "Checking Alternate..." << endl;
                             int newCost = cur.cost + 1;
                             cost[nextX][nextY] = newCost;
                             q.push(Node(nextX, nextY, newCost));
@@ -247,7 +248,7 @@ public:
                 }
             }
 
-            if (cur.x == 0 || cur.x == numRows - 1 || cur.y == 0 || cur.y == numCols - 1)
+            if (cur.x == 0 || cur.x == numRows || cur.y == 0 || cur.y == numCols)
             {
 
                 cout << "StartRow: " << startRow << endl;
@@ -262,61 +263,53 @@ public:
                     nextGrid[i].resize(GRID_SIZE);
                 }
 
-                int updatedStartX = cur.x % GRID_SIZE;
-                int updatedStartY = cur.y % GRID_SIZE;
-                int updatedEndX = endX % GRID_SIZE;
-                int updatedEndY = endY % GRID_SIZE;
-                int updatedNumRows = nextGrid.size();
-                int updatedNumCols = nextGrid[0].size();
+                cout << "Cur_X: " << cur.x << endl;
+                cout << "Cur_Y: " << cur.y << endl;
+
+                int updatedStartX = 0;
+                int updatedStartY = 0;
+
+                // Diagnol edges exception
+                if (cur.x == 0 && cur.y < numRows)
+                {
+                    cout << "New grid loaded to the left." << endl;
+                    startRow -= GRID_SIZE;
+                    endRow -= GRID_SIZE;
+                    updatedStartX = cur.x + GRID_SIZE;
+                    updatedStartY = cur.y;
+                }
+                else if (cur.x == numRows && cur.y > 0)
+                {
+                    cout << "New grid loaded to the right." << endl;
+                    startRow += GRID_SIZE;
+                    endRow += GRID_SIZE;
+                    updatedStartX = cur.x - GRID_SIZE;
+                    updatedStartY = cur.y;
+                }
+                else if (cur.x < numRows && cur.y == 0)
+                {
+                    cout << "New grid loaded below." << endl;
+                    startCol -= GRID_SIZE;
+                    endCol -= GRID_SIZE;
+                    updatedStartX = cur.x;
+                    updatedStartY = cur.y + GRID_SIZE;
+                }
+                else if (cur.x < numRows && cur.y == numRows)
+                {
+                    cout << "New grid loaded above." << endl;
+                    startCol += GRID_SIZE;
+                    endCol += GRID_SIZE;
+                    updatedStartX = cur.x;
+                    updatedStartY = cur.y - GRID_SIZE;
+                }
+
+                int updatedNumRows = numRows;
+                int updatedNumCols = numRows;
                 vector<vector<int>> updatedPath;
 
                 cout << "StartX: " << updatedStartX << endl;
                 cout << "StartY: " << updatedStartY << endl;
 
-                int dx = startRow - updatedStartX;
-                int dy = startCol - updatedStartY;
-                string direction;
-
-                if (abs(dx) > abs(dy))
-                {
-                    if (dx > 0)
-                    {
-                        direction = "New grid loaded to the right.";
-                        startRow += 1000;
-                        endRow += 1000;
-                    }
-                    else if (dx < 0)
-                    {
-                        direction = "New grid loaded to the left.";
-                        startRow -= 1000;
-                        endRow -= 1000;
-                    }
-                    else
-                    {
-                        direction = "No horizontal movement.";
-                    }
-                }
-                else
-                {
-                    if (dy > 0)
-                    {
-                        direction = "New grid loaded below.";
-                        startCol -= 1000;
-                        endCol -= 1000;
-                    }
-                    else if (dy < 0)
-                    {
-                        direction = "New grid loaded above.";
-                        startCol += 1000;
-                        endCol += 1000;
-                    }
-                    else
-                    {
-                        direction = "No vertical movement.";
-                    }
-                }
-
-                cout << direction << endl;
                 cout << endl
                      << endl
                      << endl;
@@ -325,9 +318,9 @@ public:
                 cout << "StartCol: " << startCol << endl;
                 cout << "EndCol: " << endCol << endl;
 
-                loader(startRow, endRow, startCol, endCol, nextGrid);
+                loader(startRow, endRow, startCol, endCol, grid);
 
-                bool success = AStar(nextGrid, updatedNumRows, updatedNumCols, updatedStartX, updatedStartY, endX, endY, startRow, endRow, startCol, endCol, updatedPath);
+                bool success = AStar(grid, updatedNumRows, updatedNumCols, updatedStartX, updatedStartY, endX, endY, startRow, endRow, startCol, endCol, updatedPath);
 
                 if (success)
                 {
@@ -426,13 +419,9 @@ public:
         cout << "endX: " << convertb_2(endX) << endl;
         cout << "endY: " << convertb_1(endY) << endl;
 
-        int startGridRow = startX / GRID_SIZE;
-        int startGridCol = startY / GRID_SIZE;
-
-        // Load the initial grid section
-        int startRow = startGridRow * GRID_SIZE;
+        int startRow = (startX / GRID_SIZE) * GRID_SIZE;
+        int startCol = (startY / GRID_SIZE) * GRID_SIZE;
         int endRow = startRow + GRID_SIZE;
-        int startCol = startGridCol * GRID_SIZE;
         int endCol = startCol + GRID_SIZE;
 
         cout << endl
@@ -446,18 +435,18 @@ public:
         loader(startRow, endRow, startCol, endCol, grid);
 
         cout << "Hello..." << endl;
-        cout << "StarX:" << startX % GRID_SIZE << endl;
-        cout << "StarY:" << startY % GRID_SIZE << endl;
-        cout << "endX: " << endX % GRID_SIZE << endl;
-        cout << "endY: " << endY % GRID_SIZE << endl;
+        cout << "StarX:" << startX - startRow << endl;
+        cout << "StarY:" << startY - startCol << endl;
+        cout << "endX: " << endX - startRow << endl;
+        cout << "endY: " << endY - startCol << endl;
 
-        cout << grid[startX % GRID_SIZE][startY % GRID_SIZE] << endl;
+        cout << grid[startX - startRow][startY - startCol] << endl;
 
         vector<vector<int>>
             path;
         vector<vector<int>>
             npath;
-        bool foundPath = AStar(grid, GRID_SIZE, GRID_SIZE, startX % GRID_SIZE, startY % GRID_SIZE, endX % GRID_SIZE, endY % GRID_SIZE, startRow, endRow, startCol, endCol, path);
+        bool foundPath = AStar(grid, GRID_SIZE, GRID_SIZE, startX - startRow, startY - startCol, endX - startRow, endY - startCol, startRow, endRow, startCol, endCol, path);
 
         // Print the output.
         if (foundPath)
